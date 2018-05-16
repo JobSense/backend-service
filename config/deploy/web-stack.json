@@ -1,0 +1,112 @@
+{
+    "AWSTemplateFormatVersion" : "2010-09-09",
+  
+    "Description" : "Create IAM Instance Profile for Web App",
+  
+    "Resources" : {    
+        
+      "WebRole" : {
+        "Type": "AWS::IAM::Role",
+        "Properties": {
+          "AssumeRolePolicyDocument" : {
+            "Version": "2012-10-17",
+            "Statement": [{
+              "Effect": "Allow",
+              "Principal": { 
+                  "Service" : [ "ec2.amazonaws.com" ]
+              },
+              "Action": "sts:AssumeRole"
+            }]
+          }
+        }  
+      },
+  
+      "WebRolePolicy": {
+        "Type": "AWS::IAM::Policy",
+        "Properties": {
+          "PolicyName": "WebRolePolicy",
+          "Roles": [ { "Ref": "WebRole" } ],
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                    "cloudwatch:*"
+                ],
+                "Resource": [
+                    "*"
+                ]
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                    "elasticbeanstalk:DescribeEnvironmentResources",
+                    "elasticbeanstalk:DescribeEnvironments"
+                ],
+                "Resource": ["*"]
+              },
+              {
+                  "Effect": "Allow",
+                  "Action": ["autoscaling:*"],
+                  "Resource": ["*"]
+              },
+              {
+                  "Effect": "Allow",
+                  "Action": ["cloudformation:*"],
+                  "Resource": ["*"]
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "ecs:StartTask",
+                  "ecs:StopTask",
+                  "ecs:RegisterContainerInstance",
+                  "ecs:DeregisterContainerInstance",
+                  "ecs:DescribeContainerInstances",
+                  "ecs:DiscoverPollEndpoint",
+                  "ecs:Submit*",
+                  "ecs:Poll"
+                 ],
+                "Resource": ["*"]
+              },
+              {
+                "Effect": "Allow",
+                "Action": "s3:PutObject",
+                "Resource": "arn:aws:s3:::elasticbeanstalk-*/resources/environments/logs/*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::elasticbeanstalk-*/config/*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "logs:*"
+                ],
+                "Resource": "arn:aws:logs:*:*:*"
+              }
+            ]
+          }
+        }
+      },
+  
+      "WebInstanceProfile": {
+         "Type": "AWS::IAM::InstanceProfile",
+         "Properties": {
+            "Path": "/",
+            "Roles": [ {
+               "Ref": "WebRole"
+            } ]
+         }
+      }
+    },
+    
+    "Outputs" : {
+      "InstanceProfile" : {
+        "Description" : "Logical name of the IAM Instance Profile",
+        "Value" : { "Ref" : "WebInstanceProfile" }
+      }    
+    }	
+  }

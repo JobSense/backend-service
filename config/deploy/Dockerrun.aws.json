@@ -1,0 +1,49 @@
+{
+    "AWSEBDockerrunVersion": "2",
+    "authentication": {
+        "bucket": "elasticbeanstalk-ap-southeast-1-773480812817",
+        "key": "config/incubator-docker-auth.json"
+    },
+    "volumes": [
+        {
+            "name": "nginx-proxy-conf",
+            "host": {
+                "sourcePath": "/var/app/current/nginx/proxy/conf.d"
+            }
+        }
+    ],
+    "containerDefinitions": [
+        {
+            "name": "incubator-content-filtering-service",
+            "image": "seekintgdp/incubator-content-filtering-service:__DOCKER_IMAGE_TAG__",
+            "essential": true,
+            "memory": 3600
+        },
+        {
+            "name": "nginx-proxy",
+            "image": "nginx",
+            "essential": true,
+            "memory": 128,
+            "portMappings": [
+                {
+                    "hostPort": 80,
+                    "containerPort": 80
+                }
+            ],
+            "links": [
+                "incubator-content-filtering-service:server"
+            ],
+            "mountPoints": [
+                {
+                    "sourceVolume": "nginx-proxy-conf",
+                    "containerPath": "/etc/nginx/conf.d",
+                    "readOnly": true
+                },
+                {
+                    "sourceVolume": "awseb-logs-nginx-proxy",
+                    "containerPath": "/var/log/nginx"
+                }
+            ]
+        }
+    ]
+}

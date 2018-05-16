@@ -1,0 +1,85 @@
+version: 2
+jobs:
+  build_test:
+    docker:
+      - image: ubuntu:16.04
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies 
+          command: |
+            apt update -y
+            apt install python python-pip -y
+            cd ~/project/src
+            pip install -r requirements.txt
+      - run:
+          name: Run unit test
+          command: |
+            cd ~/project/src
+            python -m unittest discover -s tests -p "*_test.py"
+  
+  dockerize_app:
+    docker:
+      - image: circleci/python:3.6.1
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Dockerize and push the app image to Docker Hub
+          command: |
+            chmod +x ./scripts/dockerize.sh
+            AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+            AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+            DOCKER_IMAGE_TAG=$(echo ${CIRCLE_BRANCH} | sed 's/\//__/g' | sed 's/\\/__/g') \
+            DOCKER_USER=${DOCKER_USER} \
+            DOCKER_PASS=${DOCKER_PASS} \
+            ./scripts/dockerize.sh
+
+  deploy_app_staging:
+    docker:
+      - image: seekintgdp/circleci-node-eb-deployer:sonic-latest
+    steps:
+      - checkout
+      - run:
+          name: Deploy the app to elastic beanstalk (staging)
+          command: |
+            chmod +x ./scripts/deploy.sh
+            LC_ALL=C \
+            STAGE=staging \
+            DEPLOY_STRAT=blue-green \
+            BUILD_NUMBER=${CIRCLE_BUILD_NUM} \
+            DOCKER_IMAGE_TAG=$(echo ${CIRCLE_BRANCH} | sed 's/\//__/g' | sed 's/\\/__/g') \
+            EB_VERSION=${BUILD_NUMBER}.${STAGE} \
+            AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+            AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+            AWS_REGION=ap-southeast-1 \
+            AWS_EC2_KEY_NAME=incubator \
+            AWS_VPC=vpc-6968970c \
+            AWS_SUBNET=subnet-bc6791cb \
+            AWS_S3_BUCKET_DOCKER_AUTH=elasticbeanstalk-ap-southeast-1-773480812817 \
+            AWS_INSTANCE_TYPE=t2.medium \
+            APP_CONTAINER_MEMORY=3600 \
+            ./scripts/deploy.sh
+
+workflows:
+  version: 2
+  status_check:
+    jobs:
+      - build_test:
+          filters:
+            branches:
+              ignore:
+                - master
+  push_docker_image_and_deploy_app_staging:
+    jobs:
+      - build_test:
+          filters:
+            branches:
+              only:
+                - circleci-deployment
+      - dockerize_app:
+          requires:
+            - build_test
+      - deploy_app_staging:
+          requires:
+            - dockerize_app
