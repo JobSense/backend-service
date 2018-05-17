@@ -1,6 +1,6 @@
 
 """Siblya content moderation engine service core resources"""
-from flask import jsonify, request
+from flask import jsonify, request, make_response
 from flask_restful import Resource
 from flask import current_app
 import numpy as np
@@ -221,4 +221,4 @@ class JobAdPerformance(Resource):
             }
             print(e.message)
 
-        return jsonify(result), 200, {'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS', 'Access-Control-Allow-Headers': 'Origin, Content-Type, X-Auth-Token'}
+        return make_response(jsonify(result), 200, {'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS', 'Access-Control-Allow-Headers': 'Origin, Content-Type, X-Auth-Token'})
