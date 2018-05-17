@@ -1,23 +1,5 @@
-VOCAB_SIZE = 90000
-
-job_title_len = 11
-job_seniority_level_len = 2
-job_industry_len = 6
-job_description_len = 800
-job_requirement_len = 300
-job_employment_type_len = 2
-company_name_len = 8
-company_size_len = 4
-job_specializations_len = 7
-job_roles_len = 8
-job_work_locations_len = 13
-company_location_len = 5
-qualification_code_len = 20
-field_of_study_len = 14
-mandatory_skill_keyword_len = 26
-
-import numpy as np
 from __future__ import division,print_function
+import numpy as np
 import math, os, json, sys, re
 import pickle
 from operator import itemgetter, attrgetter, methodcaller
@@ -48,6 +30,23 @@ from keras.layers import Merge
 from keras.models import load_model
 
 from flask import current_app
+
+VOCAB_SIZE = 90000
+job_title_len = 11
+job_seniority_level_len = 2
+job_industry_len = 6
+job_description_len = 800
+job_requirement_len = 300
+job_employment_type_len = 2
+company_name_len = 8
+company_size_len = 4
+job_specializations_len = 7
+job_roles_len = 8
+job_work_locations_len = 13
+company_location_len = 5
+qualification_code_len = 20
+field_of_study_len = 14
+mandatory_skill_keyword_len = 26
 
 
 def dot_product(x, kernel):
@@ -254,13 +253,8 @@ def scoring(jobads_inx, model):
 
   return results
 
-def handler(jobads_inx):
-    preds = current_app.model.predict([jobads_inx['job_title'],jobads_inx['job_seniority_level'],jobads_inx['job_industry'], jobads_inx['job_description'], jobads_inx['job_requirement'], jobads_inx['job_employment_type'], jobads_inx['company_name'], jobads_inx['company_size'], jobads_inx['job_specializations'], jobads_inx['job_roles'], jobads_inx['job_work_locations'], jobads_inx['company_location'], jobads_inx['qualification_code'], jobads_inx['field_of_study'], jobads_inx['mandatory_skill_keyword'], jobads_inx['num_features']])
+def handler(processed_payload):
+    m_input = jobads2inx(processed_payload, current_app.pre_model)
+    score_output = scoring(m_input, current_app.model)
 
-    results = {}
-
-    results['reach'] = [preds[0], [np.exp(np.log(preds[0]) - np.sqrt(2)), np.exp(np.log(preds[0]) + np.sqrt(2))]]
-    results['view'] =  [preds[1], [np.exp(np.log(preds[1]) - np.sqrt(0.7)), np.exp(np.log(preds[1]) + np.sqrt(0.7))]]
-    results['application'] = [preds[2], [np.exp(np.log(preds[2]) - np.sqrt(0.9)), np.exp(np.log(preds[2]) + np.sqrt(0.9))]]
-
-    return results
+    return score_output
