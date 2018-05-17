@@ -17,12 +17,12 @@ with app.app_context():
     app.config.from_envvar('APP_ENV_CONFIG', silent=True)
 
     # Setup mysql
-    # app.config['MYSQL_USER'] = 'jobsense'
-    # app.config['MYSQL_PASSWORD'] = 'jobsense'
-    # app.config['MYSQL_DB'] = 'insights'
-    # app.config['MYSQL_HOST'] = 'jobsensedb.chhnlo3xihgd.ap-southeast-1.rds.amazonaws.com'
-    # app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
-    # app.mysql = MySQL(app)
+    app.config['MYSQL_USER'] = 'jobsense'
+    app.config['MYSQL_PASSWORD'] = 'jobsense'
+    app.config['MYSQL_DB'] = 'insights'
+    app.config['MYSQL_HOST'] = 'jobsensedb.chhnlo3xihgd.ap-southeast-1.rds.amazonaws.com'
+    app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
+    app.mysql = MySQL(app)
 
     # Initialize heavy loading content, esp. the machine learning model
     # load model

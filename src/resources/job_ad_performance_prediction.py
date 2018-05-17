@@ -2,13 +2,33 @@
 """Siblya content moderation engine service core resources"""
 from flask import jsonify, request
 from flask_restful import Resource
+from flask import current_app
 import numpy as np
 from pprint import pprint
 
 from modules.performance_predictor.package_hackathon import handler
 
-def get_where_clause(payload):
+
+def get_where_clause(p_inp):
+    query = ''
+    for k, v in p_inp.iteritems():
+        if v != '':
+            query += "and {k} = '{v}' ".format(k=k, v=v)
+
+    return query
+
+def get_group_clause(p_inp):
+    base_query = 'group by '
+    arr = []
+    for k, v in p_inp.iteritems():
+        if v != '':
+            arr.append(k)
+    
+    group_query = ','.join(arr)
+    if len(arr) > 0:
+        return base_query + group_query
     return ''
+
 
 def get_num_features(payload):
     output = [
@@ -81,55 +101,124 @@ class JobAdPerformance(Resource):
             }
 
             # Insights geh
-            # cursor = current_app.mysql.connection.cursor()
-            # query = """
-            # select
-            #     min(job_total_reach) as reach_0_percentile,
-            #     avg(job_total_reach) as reach_50_percentile,
-            #     max(job_total_reach) as reach_100_percentile,
-            #     min(job_total_view) as view_0_percentile,
-            #     avg(job_total_view) as view_50_percentile,
-            #     max(job_total_view) as view_100_percentile,
-            #     min(job_total_application) as application_0_percentile,
-            #     avg(job_total_application) as application_50_percentile,
-            #     max(job_total_application) as application_100_percentile,
-            #     min()
-            #     count(1) as group_size
-            # from
-            #     job_ad
-            # where
-            #     job_total_application != 0
-            #     {where_clause}
-            #     and job_employment_type = 'Full-Time'
-            #     and job_seniority_level = 'Manager'
-            #     and job_specialization_s = 'Architecture/Interior Design'
-            #     and job_role_s = 'Architect'
-            # group by
-            #     job_employment_type,
-            #     job_seniority_level,
-            #     job_specialization_s,
-            #     job_role_s
-            # """.format(where_clause=get_where_clause(request_payload))
-
-            # cursor.execute(query)
-            # data = cursor.fetchone()
-            # cursor.close()
-
-            # print(data)
-            min_app = 0
-            max_app = 0
-            median_app = 0
-
-            min_salary = 0
-            max_salary = 0
-            median_salary = 0
-
-            result['insights'] = {
-                "applies": "Based on job ad posted in the market that have similar attributes (industry, location and years of experience), the minimum application is {min_app}, maximum is {max_app} and median is {median_app}.".format(min_app=min_app, max_app=max_app, median_app=median_app),
-                "salary": "Based on job ad posted in the market that have similar attributes (industry, location and years of experience), the minimum salary is {min_salary}, maxiumum is {max_salary} and median is {median_salary}.".format(min_salary=min_salary, max_salary=max_salary, median_salary=median_salary)
+            selected_payload = {
+                'job_industry': request_payload.get('job_industry', ''),
+                'job_employment_type': request_payload.get('job_employment_type', ''),
+                'job_seniority_level': request_payload.get('job_seniority_level', ''),
+                'job_specialization_s': request_payload.get('job_specializations_string', ''), # TODO: should be array
+                'job_role_s': request_payload.get('job_roles_string', ''), # TODO: should be array
+                'job_work_location_s': request_payload.get('job_work_locations_string', ''), # TODO: should be array, if multi location selected, ignore this field
+                'years_of_experience': request_payload.get('years_of_experience', '')
             }
+            
+            cursor = current_app.mysql.connection.cursor()
+            query = """
+            select
+                min(job_total_reach) as reach_0_percentile,
+                avg(job_total_reach) as reach_50_percentile,
+                max(job_total_reach) as reach_100_percentile,
+                min(job_total_view) as view_0_percentile,
+                avg(job_total_view) as view_50_percentile,
+                max(job_total_view) as view_100_percentile,
+                min(job_total_application) as application_0_percentile,
+                avg(job_total_application) as application_50_percentile,
+                max(job_total_application) as application_100_percentile,
+                min(cast(job_monthly_salary_min as decimal(10,3))) as salary_0_percentile,
+                avg((cast(job_monthly_salary_max as decimal(10,3)) + cast(job_monthly_salary_min as decimal(10,3)))/2) as salary_50_percentile,
+                max(job_monthly_salary_max) as salary_100_percentile,
+                count(1) as group_size
+            from
+                job_ad
+            where
+                job_total_reach > 10
+                and job_total_view = -1
+                and job_total_application != 0
+                and job_monthly_salary_min != 0
+            {where_clause}
+            {group_clause}
+            """.format(where_clause=get_where_clause(selected_payload), group_clause=get_group_clause(selected_payload))
+
+            cursor.execute(query)
+            data = cursor.fetchone()
+            cursor.close()
+
+            print(query)
+
+            if data:
+                min_reach = float(data['reach_0_percentile'])
+                max_reach = float(data['reach_100_percentile'])
+                median_reach = float(data['reach_50_percentile'])
+
+                min_view = float(data['view_0_percentile'])
+                max_view = float(data['view_100_percentile'])
+                median_view = float(data['view_50_percentile'])
+
+                min_app = float(data['application_0_percentile'])
+                max_app = float(data['application_100_percentile'])
+                median_app = float(data['application_50_percentile'])
+
+                min_salary = float(data['salary_0_percentile'])
+                max_salary = float(data['salary_100_percentile'])
+                median_salary = float(data['salary_50_percentile'])
+
+                result['insights'] = {
+                    "talentPool": {
+                        'min': min_reach,
+                        'max': max_reach,
+                        'median': median_reach,
+                        'toShow': True
+                    },
+                    "clicks": {
+                        'min': min_view,
+                        'max': max_view,
+                        'median': median_view,
+                        'toShow': True
+                    },
+                    "applies": {
+                        'min': min_app,
+                        'max': max_app,
+                        'median': median_app,
+                        'toShow': True
+                    },
+                    "salary": {
+                        'min': min_salary,
+                        'max': max_salary,
+                        'median': median_salary,
+                        'toShow': True
+                    }
+                }
+            else:
+                result['insights'] = {
+                    "talentPool": {
+                        'min': 0,
+                        'max': 0,
+                        'median': 0,
+                        'toShow': False
+                    },
+                    "view": {
+                        'min': 0,
+                        'max': 0,
+                        'median': 0,
+                        'toShow': False
+                    },
+                    "applies": {
+                        'min': 0,
+                        'max': 0,
+                        'median': 0,
+                        'toShow': False
+                    },
+                    "salary": {
+                        'min': 0,
+                        'max': 0,
+                        'median': 0,
+                        'toShow': False
+                    }
+                }
 
         except Exception as e:
-            result = e.message
+            result = {
+                'error': e.message
+            }
+            print(e.message)
 
-        return jsonify({'data': result})
+        return jsonify(result)
