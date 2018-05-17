@@ -2,6 +2,7 @@ boto3==1.6.6
 Flask==0.12
 Flask-Cors==3.0.2
 Flask-RESTful==0.3.6
+flask-mysqldb==0.2.0
 h5py==2.7.1
 gunicorn==19.6.0
 jsonschema==2.6.0

@@ -4,8 +4,11 @@ LABEL maintainer="nicholedean, yimkh92@gmail.com"
 RUN apt update -y
 
 # Install java (for pyspark)
-RUN apt install default-jdk -y
-ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+# RUN apt install default-jdk -y
+# ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+
+# Install mysql
+RUN DEBIAN_FRONTEND=noninteractive apt install mysql-client mysql-server libmysqlclient-dev -y -f
 
 # Install python 2.7
 RUN apt install python python-pip -y
