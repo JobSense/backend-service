@@ -1,15 +1,15 @@
-application: <%= 'incubator-content-filtering-service' %>
+application: <%= 'hackathon-jobsense-service' %>
 
 # common settings for all environments
 common:
   # Solution stack for elastic beanstalk, default is 64bit tomcat 7 for JAVA app
-  solution_stack_name: 64bit Amazon Linux 2017.03 v2.7.5 running Multi-container Docker 17.03.2-ce (Generic)
+  solution_stack_name: 64bit Amazon Linux 2018.03 v2.10.0 running Multi-container Docker 17.12.1-ce (Generic)
 
   # Tier name for environments. Current supported values are WebServer and Worker
   tier: WebServer
 
   # AWS region to deploy. Default to us-east-1
-  region: <%= ENV['AWS_REGION'] || 'us-east-1' %>
+  region: <%= ENV['AWS_REGION'] || 'ap-southeast-1' %>
 
   # There are three deployment strategies: 'blue-green', 'blue-only', or 'inplace-update'.
   # Blue green deployments keep two elastic beanstalk environments and always deploy to
@@ -45,9 +45,9 @@ common:
   # any changes to your tags.  If phoenix_mode is false then it will only use your tags on the
   # initial deploy.
   tags:
-    Name: incubator-content-filtering-service
+    Name: hackathon-jobsense-service
     Stream: Incubation
-    Project: Content-Filtering-Service
+    Project: hackathon-jobsense-service
     Owner: Incubation
 
   # Specifies the maximum number of versions to keep. Older versions are removed
@@ -59,7 +59,7 @@ common:
   # Specifies a prefix to prepend to the version label.
   # This can be useful if you want to use different binaries for different
   # environments.
-  version_prefix: "incubator-content-filtering-service-"
+  version_prefix: "hackathon-jobsense-service-"
 
   # Generating version label for package to be deployed. A readable version label will
   # provide better traceablity of your deployment process.
@@ -169,7 +169,7 @@ common:
         option_name: IamInstanceProfile
     capabilities: ['CAPABILITY_IAM']
 
-  package_bucket: <%= 'incubator-content-filtering-service-' + ENV['STAGE'] %>
+  package_bucket: <%= 'hackathon-jobsense-service-' + ENV['STAGE'] %>
 # You can define environment here. Each environment can overriden any common settings
 environments:
   staging:

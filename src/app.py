@@ -23,6 +23,7 @@ with app.app_context():
     app.config['MYSQL_HOST'] = 'jobsensedb.chhnlo3xihgd.ap-southeast-1.rds.amazonaws.com'
     app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
     app.mysql = MySQL(app)
+    print("MySQL connection established.")
 
     # Initialize heavy loading content, esp. the machine learning model
     # load model

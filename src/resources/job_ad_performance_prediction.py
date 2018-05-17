@@ -131,7 +131,7 @@ class JobAdPerformance(Resource):
                 job_ad
             where
                 job_total_reach > 10
-                and job_total_view = -1
+                and job_total_view != 0
                 and job_total_application != 0
                 and job_monthly_salary_min != 0
             {where_clause}
@@ -221,4 +221,4 @@ class JobAdPerformance(Resource):
             }
             print(e.message)
 
-        return jsonify(result)
+        return jsonify(result), 200, {'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS', 'Access-Control-Allow-Headers': 'Origin, Content-Type, X-Auth-Token'}

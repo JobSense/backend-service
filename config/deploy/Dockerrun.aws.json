@@ -1,8 +1,8 @@
 {
     "AWSEBDockerrunVersion": "2",
     "authentication": {
-        "bucket": "elasticbeanstalk-ap-southeast-1-773480812817",
-        "key": "config/incubator-docker-auth.json"
+        "bucket": "elasticbeanstalk-ap-southeast-1-283601884349",
+        "key": "config/docker-auth.json"
     },
     "volumes": [
         {
@@ -14,10 +14,10 @@
     ],
     "containerDefinitions": [
         {
-            "name": "incubator-content-filtering-service",
-            "image": "seekintgdp/incubator-content-filtering-service:__DOCKER_IMAGE_TAG__",
+            "name": "hackathon-jobsense-service",
+            "image": "seekintgdp/hackathon-jobsense-service:1.0.0",
             "essential": true,
-            "memory": 3600
+            "memory": 4096
         },
         {
             "name": "nginx-proxy",
@@ -31,7 +31,7 @@
                 }
             ],
             "links": [
-                "incubator-content-filtering-service:server"
+                "hackathon-jobsense-service:server"
             ],
             "mountPoints": [
                 {
