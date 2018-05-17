@@ -1,6 +1,7 @@
 from flask import Flask, jsonify
 from flask_restful import Api
 from flask_mysqldb import MySQL
+from flask_cors import CORS
 
 from src.config import common
 from src.resources.job_ad_performance_prediction import JobAdPerformance
@@ -8,6 +9,7 @@ from src.modules.performance_predictor.package_hackathon import spremodel_load, 
 
 # Create the Flask app
 app = Flask(__name__)
+CORS(app)
 
 with app.app_context():
     # Load configuration vals common
